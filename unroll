@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+# --- $xod.cpp ... # creates an arduino project(s): $xod_unroll/$xod_unroll.ino
+
+use strict; use warnings; no warnings 'uninitialized'; use 5.010; no if ($^V ge v5.18.0), warnings => 'experimental::smartmatch';
+
+sub main {
+    foreach my $input (@ARGV) {
+        if (!-e $input) {
+            warn "Expected an existing file for input, saw ''";
+            next;
+            }
+        }
+    }
+
+main();
+
