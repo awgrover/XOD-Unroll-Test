@@ -2,6 +2,12 @@
 # --- $xod.cpp ... # creates an arduino project(s): $xod_unroll/$xod_unroll.ino
 
 use strict; use warnings; no warnings 'uninitialized'; use 5.010; no if ($^V ge v5.18.0), warnings => 'experimental::smartmatch';
+use File::Basename qw(dirname basename);
+
+sub unroll {
+    my ($input, $output) = @_;
+    warn "$input -> $output"
+    }
 
 sub main {
     foreach my $input (@ARGV) {
@@ -9,6 +15,13 @@ sub main {
             warn "Expected an existing file for input, saw ''";
             next;
             }
+
+        my $output = basename($input);
+        $output =~ s/\.[^.]+$//; # remove extension
+        $output += "_unroll";
+        mkdir($output);
+
+        unroll($input, "$output/$output.ino");
         }
     }
 
