@@ -1,0 +1,181 @@
+{
+  "links": [
+    {
+      "id": "B1jy8JZJz",
+      "input": {
+        "nodeId": "B1vJLJWkM",
+        "pinKey": "HkqmLAOrD1W"
+      },
+      "output": {
+        "nodeId": "B1ekUJ-kf",
+        "pinKey": "B1x2RV3eZ"
+      }
+    },
+    {
+      "id": "HkLWIJ-Jf",
+      "input": {
+        "nodeId": "B1TeUkWyG",
+        "pinKey": "HJbACN3gb"
+      },
+      "output": {
+        "nodeId": "rkXZ81Z1z",
+        "pinKey": "B1x2RV3eZ"
+      }
+    },
+    {
+      "id": "HyObIk-1G",
+      "input": {
+        "nodeId": "BkZgI1-1M",
+        "pinKey": "S1yZIA_rDJZ"
+      },
+      "output": {
+        "nodeId": "B1TeUkWyG",
+        "pinKey": "B19RYS3lW"
+      }
+    },
+    {
+      "id": "HysXI1ZJM",
+      "input": {
+        "nodeId": "BkZgI1-1M",
+        "pinKey": "r1AgIROHDJW"
+      },
+      "output": {
+        "nodeId": "HkSQ81-Jz",
+        "pinKey": "B1x2RV3eZ"
+      }
+    },
+    {
+      "id": "S1I4UybJM",
+      "input": {
+        "nodeId": "ry44Iy-yz",
+        "pinKey": "B134j4neZ"
+      },
+      "output": {
+        "nodeId": "BkZgI1-1M",
+        "pinKey": "S13xLCuHvkW"
+      }
+    },
+    {
+      "id": "S1gWIy-yf",
+      "input": {
+        "nodeId": "B1TeUkWyG",
+        "pinKey": "rJg00Nhe-"
+      },
+      "output": {
+        "nodeId": "B1vJLJWkM",
+        "pinKey": "SyomIRurDJ-"
+      }
+    },
+    {
+      "id": "rJqyUJZkz",
+      "input": {
+        "nodeId": "B1vJLJWkM",
+        "pinKey": "BJnQUR_BwyZ"
+      },
+      "output": {
+        "nodeId": "Hyd0HkbyG",
+        "pinKey": "B1x2RV3eZ"
+      }
+    },
+    {
+      "id": "rku7U1ZJM",
+      "input": {
+        "nodeId": "BkZgI1-1M",
+        "pinKey": "ryTeUROHD1b"
+      },
+      "output": {
+        "nodeId": "HJ-QL1-JG",
+        "pinKey": "B1x2RV3eZ"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "B1TeUkWyG",
+      "position": {
+        "x": 204,
+        "y": 204
+      },
+      "type": "xod/core/greater"
+    },
+    {
+      "boundValues": {
+        "B1x2RV3eZ": 4
+      },
+      "id": "B1ekUJ-kf",
+      "position": {
+        "x": 238,
+        "y": 0
+      },
+      "type": "xod/core/constant-number"
+    },
+    {
+      "id": "B1vJLJWkM",
+      "position": {
+        "x": 204,
+        "y": 102
+      },
+      "type": "xod/core/add"
+    },
+    {
+      "id": "BkZgI1-1M",
+      "position": {
+        "x": 204,
+        "y": 306
+      },
+      "type": "xod/core/if-else"
+    },
+    {
+      "id": "HJ-QL1-JG",
+      "label": "pina",
+      "position": {
+        "x": 340,
+        "y": 102
+      },
+      "type": "xod/core/constant-number"
+    },
+    {
+      "id": "HkSQ81-Jz",
+      "label": "pinb",
+      "position": {
+        "x": 408,
+        "y": 102
+      },
+      "type": "xod/core/constant-number"
+    },
+    {
+      "boundValues": {
+        "B1x2RV3eZ": 1
+      },
+      "id": "Hyd0HkbyG",
+      "position": {
+        "x": 170,
+        "y": 0
+      },
+      "type": "xod/core/constant-number"
+    },
+    {
+      "boundValues": {
+        "B1x2RV3eZ": 3
+      },
+      "id": "rkXZ81Z1z",
+      "label": "thresh",
+      "position": {
+        "x": 340,
+        "y": 0
+      },
+      "type": "xod/core/constant-number"
+    },
+    {
+      "boundValues": {
+        "HJ6HsEngZ": true
+      },
+      "id": "ry44Iy-yz",
+      "position": {
+        "x": 204,
+        "y": 408
+      },
+      "type": "xod/core/digital-output"
+    }
+  ]
+}
