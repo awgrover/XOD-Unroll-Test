@@ -1,12 +1,89 @@
 #!/usr/bin/env perl
-# --- $xod.cpp ... # creates an arduino project(s): $xod_unroll/$xod_unroll.ino
+# Unroll xod generated code (targetted to xod 0.14.0)
+# --- $some.cpp ... # creates an arduino project(s): {$some}_unroll/{$some}_unroll.ino
 
 use strict; use warnings; no warnings 'uninitialized'; use 5.010; no if ($^V ge v5.18.0), warnings => 'experimental::smartmatch';
 use File::Basename qw(dirname basename);
 
+# Yes, we are very literal
+our $ReplaceLoop = <<'EOS';
+    for (NodeId nid = 0; nid < NODE_COUNT; ++nid) {
+        if (isNodeDirty(nid)) {
+            evaluateNode(nid);
+
+            // If the schedule is stale, clear timeout so that
+            // the node would not be marked dirty again in idle
+            if (isTimedOut(nid))
+                clearTimeout(nid);
+        }
+    }
+EOS
+
+our $xod_code;
+
 sub unroll {
     my ($input, $output) = @_;
-    warn "$input -> $output"
+    say "$input -> $output";
+
+    system('wc', '-l', '-c', $input);
+    $xod_code = `cat "$input"`; # rude slurp, because I'm lazy
+
+    my $uh = IO::File->new(">$output") || die $!;
+    
+    my $node_count = get_node_count();
+    say "Nodes $node_count";
+
+    my $eval_functions = collect_eval_functions();
+    replace_the_loop($node_count, $eval_functions);
+    
+    print $uh $xod_code;
+    $uh->close;
+    system('wc', '-l', '-c', $output);
+    }
+
+sub collect_eval_functions {
+    # find the function name for each node-index
+    # looks like
+    # const xod__core__constant_number::Wiring wiring_0 PROGMEM = {
+    # &xod__core__constant_number::evaluate,
+
+    my @fn;
+    my $i=0;
+    for my $function_name ($xod_code =~ / wiring_\d+ PROGMEM = {\s+&([^,]+)/sg) {
+        $fn[$i] = $function_name;
+        say "  [$i] $function_name";
+        $i++;
+        }
+    \@fn;
+    }
+             
+sub get_node_count {
+    my ($ct) = $xod_code =~ /^#define NODE_COUNT\s+(\d+)/m;
+    die "No #define NODE_COUNT" if !defined($ct);
+    say "## $ct";
+    return $ct;
+    }
+
+sub replace_the_loop {
+    my ($node_count, $eval_function) = @_;
+    my @unrolled;
+
+    push @unrolled, '// Unrolled';
+
+
+    foreach my $node_index ((0..$node_count-1)) {
+        push @unrolled, "if (isNodeDirty($node_index)) {";
+        push @unrolled, "    " . $eval_function->[$node_index] ."($node_index);";
+        push @unrolled, "    if (isTimedOut($node_index))";
+        push @unrolled, "        clearTimeout($node_index);";
+
+        push @unrolled, "}";
+        }
+
+    # not trying to be efficient in our editing
+
+    my $replacement = "    ".join("\n    ", @unrolled)."\n";
+    $xod_code =~ s/\Q$ReplaceLoop\E/$replacement/;
     }
 
 sub main {
@@ -18,7 +95,7 @@ sub main {
 
         my $output = basename($input);
         $output =~ s/\.[^.]+$//; # remove extension
-        $output += "_unroll";
+        $output .= "_unroll";
         mkdir($output);
 
         unroll($input, "$output/$output.ino");
