@@ -129,10 +129,5 @@ I deleted the unused EvalFuncPtr in the Wiring structures.
 	code/ram code-growth%
 	3070/105	14%
 
-It's not surprising to see an improvement, but we just saved 14.4 bytes per node (144 bytes, 10 nodes).
-
-# Simplifying constants
-
-As an experiment in optimization, I'll change constant nodes into a simple "const".
-
+It's not surprising to see an improvement, but we just saved 14.4 bytes per node: 144 bytes, 10 nodes. That seems like a funny number.
 
