@@ -1067,8 +1067,21 @@ void setup() {
 }
 
 void loop() {
+    static int loop_count = 0;
+    static unsigned long start_time = millis();
+
+    // the original XOD body:
     xod::idle();
     xod::runTransaction();
+
+    // doctoring: say how long 100 executions takes
+    memset(xod::g_dirtyFlags, 255, sizeof(xod::g_dirtyFlags));
+    loop_count++;
+    if (loop_count >= 100) {
+        Serial.println( millis() - start_time );
+        start_time = millis();
+        loop_count = 0;
+        }
 }
 
 /*=============================================================================
