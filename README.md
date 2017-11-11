@@ -10,7 +10,7 @@ XOD 0.14.0
 Arduino ID 1.8.1
 Compile for UNO
 
-# Stats
+# Measuring
 
 We'll compare the standard "generated code" ("Deploy: Show Code for Arduino") with some hand attempts at unrolling. I'll compile for the UNO as a reference, using the Arduino IDE.
 
@@ -101,5 +101,38 @@ I'll just put the function call inline.
 
 Of course I'll use Perl to edit the generated code and create the unroll code. The XOD code is very stereotyped, so it should be reliable to just do text processing on it.
 
+# First Unrolling Performance Test
+
+I only unrolled the loop, inlining the "evaluation" call. I even left the unused EvalFuncPtr in the Wiring structures.
+
+    unroll arduino_optimization_test/arduino_optimization_test.ino
+
+    Project    Flash/RAM    code-growth%    ms/100-loops    speedup%    
+    (UNO board)    32256/2048            
+    XOD Generated Code    2756/105            
+    XOD w/timing    3990/294    45%    23ms    
+    Unroll1    3214/105    17%        
+    Unroll1 w/timing    4464/294    12%    18ms    22%
+
+Adding the timing code causes a large increase in code and RAM: I think that's all due to Serial. 
+
+As I guessed, unrolling speeds things up quite a bit (22% faster). I'm still guessing that is because of skipping a lot of fetches from progmem. 
+
+Code size goes up, not surprisingly, since I unroll the loop. The percentages don't take into account the overhead for the basic arduino code (444/9 for null void() and setup()), etc. A better percent would take into account the XOD library code, etc.
+
+Without the timing code, RAM usage doesn't change. That's not surprising, since the RAM is almost all the dirty flags and the node's output values.
+
+# First Unrolling Performance Test
+
+I deleted the unused EvalFuncPtr in the Wiring structures.
+
+	code/ram code-growth%
+	3070/105	14%
+
+It's not surprising to see an improvement, but we just saved 14.4 bytes per node (144 bytes, 10 nodes).
+
+# Simplifying constants
+
+As an experiment in optimization, I'll change constant nodes into a simple "const".
 
 

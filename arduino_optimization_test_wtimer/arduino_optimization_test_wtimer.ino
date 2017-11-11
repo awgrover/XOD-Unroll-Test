@@ -635,7 +635,7 @@ template <typename T> class List {
 #define MAX_OUTPUT_COUNT    1
 
 // Uncomment to turn on debug of the program
-//#define XOD_DEBUG
+#define XOD_DEBUG
 
 // Uncomment to trace the program runtime in the Serial Monitor
 //#define XOD_DEBUG_ENABLE_TRACE
@@ -1067,8 +1067,21 @@ void setup() {
 }
 
 void loop() {
+    static int loop_count = 0;
+    static unsigned long start_time = millis();
+
+
     xod::idle();
     xod::runTransaction();
+
+    // doctoring: say how long 100 executions takes
+    memset(xod::g_dirtyFlags, 255, sizeof(xod::g_dirtyFlags));
+    loop_count++;
+    if (loop_count >= 100) {
+        Serial.println( millis() - start_time );
+        start_time = millis();
+        loop_count = 0;
+        }
 }
 
 /*=============================================================================

@@ -1,6 +1,11 @@
 #!/usr/bin/env perl
 # Unroll xod generated code (targetted to xod 0.14.0)
-# --- $some.cpp ... # creates an arduino project(s): {$some}_unroll/{$some}_unroll.ino
+# --- $some.cpp ... 
+# creates 3 arduino projects for each input file: 
+# {$some}_unroll/{$some}_unroll.ino # unrolled
+# ${some}_wtimer/${some}_wtimer.ino # original code but with a performance timer
+# {$some}_unroll_wtimer/{$some}_unroll_wtimer.ino # unrolled, with performance timer
+# The performance-timer outputs elapsed time per 100 "transactions"
 
 use strict; use warnings; no warnings 'uninitialized'; use 5.010; no if ($^V ge v5.18.0), warnings => 'experimental::smartmatch';
 use File::Basename qw(dirname basename);
@@ -25,7 +30,6 @@ sub unroll {
     my ($input, $output) = @_;
     say "$input -> $output";
 
-    system('wc', '-l', '-c', $input);
     $xod_code = `cat "$input"`; # rude slurp, because I'm lazy
 
     my $uh = IO::File->new(">$output") || die $!;
@@ -38,7 +42,10 @@ sub unroll {
     
     print $uh $xod_code;
     $uh->close;
-    system('wc', '-l', '-c', $output);
+
+    move_runTransaction($output); # have to move to end
+
+    return $output;
     }
 
 sub collect_eval_functions {
@@ -86,6 +93,111 @@ sub replace_the_loop {
     $xod_code =~ s/\Q$ReplaceLoop\E/$replacement/;
     }
 
+sub move_runTransaction {
+    # Have to move runTransaction() after the node declarations
+    # and add a declare
+
+    my ($file) = @_;
+    my $code = `cat "$file"`;
+
+    # find the decl, and matching '}'. crude.
+    $code =~ /^void runTransaction\(\) {/m;
+    my ($before, $startline, $rest) = ($`, $&, $');
+    die "Can't find 'void runTransaction' in $file" if !$before;
+
+    # need decl before void loop
+    ($rest =~ s/void loop\(\)/namespace xod{void runTransaction();}\nvoid loop()/) or die "Can't find 'void loop()'";
+
+    my ($indent) = $startline =~ /^(\s*)/m; # could be ''
+
+    # now find '   }'
+    $rest =~ /^$indent}/m;
+    my ($body, $endline, $rest2) = ($`, $&, $');
+    die "Can't find end of 'void runTransaction' as '$indent}' in $file\n---\n$rest" if !$body;
+
+    my $oh = IO::File->new(">$file");
+    print $oh $before,$rest2;
+    say $oh 'namespace xod {';
+    say $oh $startline,$body,$endline;
+    say $oh "}";
+    $oh->close;
+    }
+
+sub add_timer {
+    my ($file) = @_;
+    my $outfile = basename_wo_ext($file) . "_wtimer";
+
+    my $code = `cat "$file"`;
+
+    # enable serial
+    $code =~ s/^\/\/(#define XOD_DEBUG)/$1/m;
+
+    $code =~ /^void loop\(\) {/m;
+    my ($before, $loopline, $rest) = ($`,$&,$');
+    die "Can't find 'void loop()'" if !$before;
+
+    my ($indent) = $loopline =~ /^(\s*)/m;
+
+    $rest =~ /^$indent}/m;
+    my ($body, $endline, $rest2) = ($`,$&,$');
+    die "Can't find 'end of void loop() as '$indent}' in $file" if !$body;
+
+    mkdir($outfile);
+    my $oh = IO::File->new(">$outfile/$outfile.ino");
+    say $oh $before,$loopline;
+    say $oh '    static int loop_count = 0;';
+    say $oh '    static unsigned long start_time = millis();';
+    say $oh '';
+    print $oh $body;
+    print $oh <<'EOS'; # C Code:
+
+    // doctoring: say how long 100 executions takes
+    memset(xod::g_dirtyFlags, 255, sizeof(xod::g_dirtyFlags));
+    loop_count++;
+    if (loop_count >= 100) {
+        Serial.println( millis() - start_time );
+        start_time = millis();
+        loop_count = 0;
+        }
+EOS
+    print $oh $endline;
+    print $oh $rest2;
+    $oh->close;
+
+    return "$outfile/$outfile.ino";
+    }
+
+sub remove_EvalFuncPtr {
+    my ($file) = @_;
+    my $outfile = basename_wo_ext($file) . "_noevalptr";
+
+    my $code = `cat "$file"`;
+
+    # remove the field like:
+    # struct Wiring {
+    # EvalFuncPtr eval;
+    $code =~ s/(struct Wiring \{)\s+EvalFuncPtr eval;/$1/sg;
+
+    # remove the initializer entry like:
+    # const xod__core__constant_number::Wiring wiring_0 PROGMEM = {
+    # &xod__core__constant_number::evaluate,
+    $code =~ s/(wiring_\d+ PROGMEM = \{)\s+&[^,]+,/$1/sg;
+
+    mkdir($outfile);
+    my $oh = IO::File->new(">$outfile/$outfile.ino");
+    print $oh $code;
+
+    return "$outfile/$outfile.ino";
+    }
+
+sub basename_wo_ext {
+    # get basename and remove extension
+    my ($input) = @_;
+    my $rez = basename($input);
+    $rez =~ s/\.[^.]+$//; # remove extension
+    $rez;
+    }
+
 sub main {
     foreach my $input (@ARGV) {
         if (!-e $input) {
@@ -93,12 +205,21 @@ sub main {
             next;
             }
 
-        my $output = basename($input);
-        $output =~ s/\.[^.]+$//; # remove extension
+        add_timer($input); # we want a timer version
+
+        my @unrolled; # list of unrolled projects
+
+        my $output = basename_wo_ext($input);
         $output .= "_unroll";
         mkdir($output);
 
-        unroll($input, "$output/$output.ino");
+        push @unrolled, unroll($input, "$output/$output.ino");
+        push @unrolled, add_timer("$output/$output.ino");
+
+        # for all the unrolled projects, make a remove_EvalFuncPtr version
+        push @unrolled, map { remove_EvalFuncPtr($_); } @unrolled;
+
+        system("find . -name '*.ino' | xargs wc -l -c");
         }
     }
 

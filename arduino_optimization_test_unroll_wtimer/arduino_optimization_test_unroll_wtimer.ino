@@ -635,7 +635,7 @@ template <typename T> class List {
 #define MAX_OUTPUT_COUNT    1
 
 // Uncomment to turn on debug of the program
-//#define XOD_DEBUG
+#define XOD_DEBUG
 
 // Uncomment to trace the program runtime in the Serial Monitor
 //#define XOD_DEBUG_ENABLE_TRACE
@@ -982,29 +982,7 @@ void evaluateNode(NodeId nid) {
     eval(nid);
 }
 
-void runTransaction() {
-    g_transactionTime = millis();
 
-    XOD_TRACE_F("Transaction started, t=");
-    XOD_TRACE_LN(g_transactionTime);
-
-    for (NodeId nid = 0; nid < NODE_COUNT; ++nid) {
-        if (isNodeDirty(nid)) {
-            evaluateNode(nid);
-
-            // If the schedule is stale, clear timeout so that
-            // the node would not be marked dirty again in idle
-            if (isTimedOut(nid))
-                clearTimeout(nid);
-        }
-    }
-
-    // Clear dirtieness for all nodes and pins
-    memset(g_dirtyFlags, 0, sizeof(g_dirtyFlags));
-
-    XOD_TRACE_F("Transaction completed, t=");
-    XOD_TRACE_LN(millis());
-}
 
 void idle() {
     // Mark timed out nodes dirty. Do not reset schedule here to give
@@ -1066,9 +1044,23 @@ void setup() {
     XOD_TRACE_FLN("\n\nProgram started");
 }
 
+namespace xod{void runTransaction();}
 void loop() {
+    static int loop_count = 0;
+    static unsigned long start_time = millis();
+
+
     xod::idle();
     xod::runTransaction();
+
+    // doctoring: say how long 100 executions takes
+    memset(xod::g_dirtyFlags, 255, sizeof(xod::g_dirtyFlags));
+    loop_count++;
+    if (loop_count >= 100) {
+        Serial.println( millis() - start_time );
+        start_time = millis();
+        loop_count = 0;
+        }
 }
 
 /*=============================================================================
@@ -1530,4 +1522,70 @@ namespace xod {
         &storage_8,
         &storage_9
     };
+}
+namespace xod {
+void runTransaction() {
+    g_transactionTime = millis();
+
+    XOD_TRACE_F("Transaction started, t=");
+    XOD_TRACE_LN(g_transactionTime);
+
+    // Unrolled
+    if (isNodeDirty(0)) {
+        xod__core__constant_number::evaluate(0);
+        if (isTimedOut(0))
+            clearTimeout(0);
+    }
+    if (isNodeDirty(1)) {
+        xod__core__constant_number::evaluate(1);
+        if (isTimedOut(1))
+            clearTimeout(1);
+    }
+    if (isNodeDirty(2)) {
+        xod__core__constant_number::evaluate(2);
+        if (isTimedOut(2))
+            clearTimeout(2);
+    }
+    if (isNodeDirty(3)) {
+        xod__core__constant_number::evaluate(3);
+        if (isTimedOut(3))
+            clearTimeout(3);
+    }
+    if (isNodeDirty(4)) {
+        xod__core__constant_number::evaluate(4);
+        if (isTimedOut(4))
+            clearTimeout(4);
+    }
+    if (isNodeDirty(5)) {
+        xod__core__constant_boolean::evaluate(5);
+        if (isTimedOut(5))
+            clearTimeout(5);
+    }
+    if (isNodeDirty(6)) {
+        xod__core__add::evaluate(6);
+        if (isTimedOut(6))
+            clearTimeout(6);
+    }
+    if (isNodeDirty(7)) {
+        xod__core__greater::evaluate(7);
+        if (isTimedOut(7))
+            clearTimeout(7);
+    }
+    if (isNodeDirty(8)) {
+        xod__core__if_else::evaluate(8);
+        if (isTimedOut(8))
+            clearTimeout(8);
+    }
+    if (isNodeDirty(9)) {
+        xod__core__digital_output::evaluate(9);
+        if (isTimedOut(9))
+            clearTimeout(9);
+    }
+
+    // Clear dirtieness for all nodes and pins
+    memset(g_dirtyFlags, 0, sizeof(g_dirtyFlags));
+
+    XOD_TRACE_F("Transaction completed, t=");
+    XOD_TRACE_LN(millis());
+}
 }

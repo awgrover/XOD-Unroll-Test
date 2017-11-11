@@ -982,29 +982,7 @@ void evaluateNode(NodeId nid) {
     eval(nid);
 }
 
-void runTransaction() {
-    g_transactionTime = millis();
 
-    XOD_TRACE_F("Transaction started, t=");
-    XOD_TRACE_LN(g_transactionTime);
-
-    for (NodeId nid = 0; nid < NODE_COUNT; ++nid) {
-        if (isNodeDirty(nid)) {
-            evaluateNode(nid);
-
-            // If the schedule is stale, clear timeout so that
-            // the node would not be marked dirty again in idle
-            if (isTimedOut(nid))
-                clearTimeout(nid);
-        }
-    }
-
-    // Clear dirtieness for all nodes and pins
-    memset(g_dirtyFlags, 0, sizeof(g_dirtyFlags));
-
-    XOD_TRACE_F("Transaction completed, t=");
-    XOD_TRACE_LN(millis());
-}
 
 void idle() {
     // Mark timed out nodes dirty. Do not reset schedule here to give
@@ -1066,6 +1044,7 @@ void setup() {
     XOD_TRACE_FLN("\n\nProgram started");
 }
 
+namespace xod{void runTransaction();}
 void loop() {
     xod::idle();
     xod::runTransaction();
@@ -1094,7 +1073,6 @@ struct Storage {
 };
 
 struct Wiring {
-    EvalFuncPtr eval;
     const NodeId* output_VAL;
 };
 
@@ -1123,7 +1101,6 @@ struct Storage {
 };
 
 struct Wiring {
-    EvalFuncPtr eval;
     UpstreamPinRef input_X;
     UpstreamPinRef input_Y;
     const NodeId* output_SUM;
@@ -1160,7 +1137,6 @@ struct Storage {
 };
 
 struct Wiring {
-    EvalFuncPtr eval;
     UpstreamPinRef input_COND;
     UpstreamPinRef input_T;
     UpstreamPinRef input_F;
@@ -1200,7 +1176,6 @@ struct Storage {
 };
 
 struct Wiring {
-    EvalFuncPtr eval;
     UpstreamPinRef input_LHS;
     UpstreamPinRef input_RHS;
     const NodeId* output_GT;
@@ -1237,7 +1212,6 @@ struct Storage {
 };
 
 struct Wiring {
-    EvalFuncPtr eval;
     UpstreamPinRef input_PORT;
     UpstreamPinRef input_SIG;
 };
@@ -1279,7 +1253,6 @@ struct Storage {
 };
 
 struct Wiring {
-    EvalFuncPtr eval;
     const NodeId* output_VAL;
 };
 
@@ -1391,7 +1364,6 @@ namespace xod {
     // Wiring of #0 xod/core/constant_number
     const NodeId outLinks_0_VAL[] PROGMEM = { 6, NO_NODE };
     const xod__core__constant_number::Wiring wiring_0 PROGMEM = {
-        &xod__core__constant_number::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         // outputs (NodeId list binding)
         outLinks_0_VAL // output_VAL
@@ -1400,7 +1372,6 @@ namespace xod {
     // Wiring of #1 xod/core/constant_number
     const NodeId outLinks_1_VAL[] PROGMEM = { 6, NO_NODE };
     const xod__core__constant_number::Wiring wiring_1 PROGMEM = {
-        &xod__core__constant_number::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         // outputs (NodeId list binding)
         outLinks_1_VAL // output_VAL
@@ -1409,7 +1380,6 @@ namespace xod {
     // Wiring of #2 xod/core/constant_number
     const NodeId outLinks_2_VAL[] PROGMEM = { 7, NO_NODE };
     const xod__core__constant_number::Wiring wiring_2 PROGMEM = {
-        &xod__core__constant_number::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         // outputs (NodeId list binding)
         outLinks_2_VAL // output_VAL
@@ -1418,7 +1388,6 @@ namespace xod {
     // Wiring of #3 xod/core/constant_number
     const NodeId outLinks_3_VAL[] PROGMEM = { 8, NO_NODE };
     const xod__core__constant_number::Wiring wiring_3 PROGMEM = {
-        &xod__core__constant_number::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         // outputs (NodeId list binding)
         outLinks_3_VAL // output_VAL
@@ -1427,7 +1396,6 @@ namespace xod {
     // Wiring of #4 xod/core/constant_number
     const NodeId outLinks_4_VAL[] PROGMEM = { 8, NO_NODE };
     const xod__core__constant_number::Wiring wiring_4 PROGMEM = {
-        &xod__core__constant_number::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         // outputs (NodeId list binding)
         outLinks_4_VAL // output_VAL
@@ -1436,7 +1404,6 @@ namespace xod {
     // Wiring of #5 xod/core/constant_boolean
     const NodeId outLinks_5_VAL[] PROGMEM = { 9, NO_NODE };
     const xod__core__constant_boolean::Wiring wiring_5 PROGMEM = {
-        &xod__core__constant_boolean::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         // outputs (NodeId list binding)
         outLinks_5_VAL // output_VAL
@@ -1445,7 +1412,6 @@ namespace xod {
     // Wiring of #6 xod/core/add
     const NodeId outLinks_6_SUM[] PROGMEM = { 7, NO_NODE };
     const xod__core__add::Wiring wiring_6 PROGMEM = {
-        &xod__core__add::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         { NodeId(0),
             xod__core__constant_number::output_VAL::INDEX,
@@ -1460,7 +1426,6 @@ namespace xod {
     // Wiring of #7 xod/core/greater
     const NodeId outLinks_7_GT[] PROGMEM = { 8, NO_NODE };
     const xod__core__greater::Wiring wiring_7 PROGMEM = {
-        &xod__core__greater::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         { NodeId(6),
             xod__core__add::output_SUM::INDEX,
@@ -1475,7 +1440,6 @@ namespace xod {
     // Wiring of #8 xod/core/if_else
     const NodeId outLinks_8_R[] PROGMEM = { 9, NO_NODE };
     const xod__core__if_else::Wiring wiring_8 PROGMEM = {
-        &xod__core__if_else::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         { NodeId(7),
             xod__core__greater::output_GT::INDEX,
@@ -1492,7 +1456,6 @@ namespace xod {
 
     // Wiring of #9 xod/core/digital_output
     const xod__core__digital_output::Wiring wiring_9 PROGMEM = {
-        &xod__core__digital_output::evaluate,
         // inputs (UpstreamPinRef’s initializers)
         { NodeId(8),
             xod__core__if_else::output_R::INDEX,
@@ -1530,4 +1493,70 @@ namespace xod {
         &storage_8,
         &storage_9
     };
+}
+namespace xod {
+void runTransaction() {
+    g_transactionTime = millis();
+
+    XOD_TRACE_F("Transaction started, t=");
+    XOD_TRACE_LN(g_transactionTime);
+
+    // Unrolled
+    if (isNodeDirty(0)) {
+        xod__core__constant_number::evaluate(0);
+        if (isTimedOut(0))
+            clearTimeout(0);
+    }
+    if (isNodeDirty(1)) {
+        xod__core__constant_number::evaluate(1);
+        if (isTimedOut(1))
+            clearTimeout(1);
+    }
+    if (isNodeDirty(2)) {
+        xod__core__constant_number::evaluate(2);
+        if (isTimedOut(2))
+            clearTimeout(2);
+    }
+    if (isNodeDirty(3)) {
+        xod__core__constant_number::evaluate(3);
+        if (isTimedOut(3))
+            clearTimeout(3);
+    }
+    if (isNodeDirty(4)) {
+        xod__core__constant_number::evaluate(4);
+        if (isTimedOut(4))
+            clearTimeout(4);
+    }
+    if (isNodeDirty(5)) {
+        xod__core__constant_boolean::evaluate(5);
+        if (isTimedOut(5))
+            clearTimeout(5);
+    }
+    if (isNodeDirty(6)) {
+        xod__core__add::evaluate(6);
+        if (isTimedOut(6))
+            clearTimeout(6);
+    }
+    if (isNodeDirty(7)) {
+        xod__core__greater::evaluate(7);
+        if (isTimedOut(7))
+            clearTimeout(7);
+    }
+    if (isNodeDirty(8)) {
+        xod__core__if_else::evaluate(8);
+        if (isTimedOut(8))
+            clearTimeout(8);
+    }
+    if (isNodeDirty(9)) {
+        xod__core__digital_output::evaluate(9);
+        if (isTimedOut(9))
+            clearTimeout(9);
+    }
+
+    // Clear dirtieness for all nodes and pins
+    memset(g_dirtyFlags, 0, sizeof(g_dirtyFlags));
+
+    XOD_TRACE_F("Transaction completed, t=");
+    XOD_TRACE_LN(millis());
+}
 }
