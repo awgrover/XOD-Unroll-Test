@@ -1,8 +1,8 @@
 # Some tests of unrolling the 0.14.0 XOD generated code
 
-See the XOD project in xod-arduino_optimization_test/
+See the XOD project in xod-optimization-test/. This README, and the test code, and the unrolling code, are at <https://github.com/awgrover/XOD-Unroll-Test>.
 
-The XOD graph is a fairly simple one that just adds some numbers, does an ifelse and a digitalWrite. It would only run once, since the top of all the branches are constants.
+The test XOD project is a fairly simple one that just adds some numbers, does an ifelse and a digitalWrite. It would only run once, since the top of all the branches are constants.
 
 # Configuration
 
@@ -12,9 +12,14 @@ Compile for UNO
 
 # Measuring
 
-We'll compare the standard "generated code" ("Deploy: Show Code for Arduino") with some hand attempts at unrolling. I'll compile for the UNO as a reference, using the Arduino IDE.
+We'll compare the standard "generated code" ("Deploy: Show Code for Arduino") with some "hand" attempts at unrolling. I'll compile for the UNO as a reference, using the Arduino IDE.
 
-I doctor the generated code by adding some timing code, and dirtying the graph each time (so it re-runs the graph):
+I'll make several arduino projects, see all the subdirectories in the git archive:
+
+* The original xod generate code
+* Unrolled
+
+And a doctored version of each with timing code, and dirtying the graph each time (so it re-runs the graph):
 
     void loop() {
         static int loop_count = 0;
@@ -38,7 +43,7 @@ I doctor the generated code by adding some timing code, and dirtying the graph e
 
 I'm more concerned with execution speed than RAM usage, but expect to see some memory improvements.
 
-I expect that unrolling, and especially inlining the "evaluate" call, should make more static analysis possible for the compiler, so code size should decrease (unrolling would increase it though!). And, inlining allow removing some stored values. Also, the unrolling and inlining removes many fetches (most of the fetches are from PROGMEM, so are particularly slow).
+I expect that unrolling, and especially inlining the "evaluate" call, should make more static analysis possible for the compiler, so code size should decrease (unrolling would increase it though!). And, inlining allows removing some stored values. Also, the unrolling and inlining removes many fetches (most of the fetches are from PROGMEM, so are particularly slow).
 
 For the first test, unroll the loop, and inline the "evaluate" call.
 
@@ -93,6 +98,10 @@ and
 
 And an "instance" of Wiring looks like:
 
+    const xod__core__add::Wiring wiring_6 PROGMEM = {
+        &xod__core__add::evaluate,
+        ....
+ 
 Some gyrations have to be gone through to return the function pointer from PROGMEM storage.
 
 I'll just put the function call inline.
@@ -105,7 +114,7 @@ Of course I'll use Perl to edit the generated code and create the unroll code. T
 
 I only unrolled the loop, inlining the "evaluation" call. I even left the unused EvalFuncPtr in the Wiring structures.
 
-    unroll arduino_optimization_test/arduino_optimization_test.ino
+    ./unroll arduino_optimization_test/arduino_optimization_test.ino
 
     Project    Flash/RAM    code-growth%    ms/100-loops    speedup%    
     (UNO board)    32256/2048            
@@ -122,7 +131,11 @@ Code size goes up, not surprisingly, since I unroll the loop. The percentages do
 
 Without the timing code, RAM usage doesn't change. That's not surprising, since the RAM is almost all the dirty flags and the node's output values.
 
-# First Unrolling Performance Test
+## Conclusion
+
+Significant speed improvement by unrolling, but it's not obvious that there was much code-optimization.
+
+# Remove EvalFuncPtr Performance Test
 
 I deleted the unused EvalFuncPtr in the Wiring structures.
 
