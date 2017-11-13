@@ -93,6 +93,26 @@ sub replace_the_loop {
     $xod_code =~ s/\Q$ReplaceLoop\E/$replacement/;
     }
 
+sub parse_out_block {
+  # string, ...
+  my ($file, $start_re) = @_[1,2]; # @_[0] is the string
+  warn "@@ ",@_[2];
+
+  $_[0] =~ $start_re;
+
+  my ($before, $startline, $rest) = ($`, $&, $');
+  die "Can't find $start_re in $file" if !$before;
+
+  my ($indent) = $startline =~ /^(\s*)/m; # could be ''
+
+  # now find '   }'
+  $rest =~ /^$indent}/m;
+  my ($body, $endline, $rest2) = ($`, $&, $');
+  die "Can't find end of $start_re as '$indent}' in $file\n---\n$rest" if !$body;
+
+  return ($before, $startline, $body, $endline, $rest2);
+  }
+
 sub move_runTransaction {
     # Have to move runTransaction() after the node declarations
     # and add a declare
@@ -101,24 +121,17 @@ sub move_runTransaction {
     my $code = `cat "$file"`;
 
     # find the decl, and matching '}'. crude.
-    $code =~ /^void runTransaction\(\) {/m;
-    my ($before, $startline, $rest) = ($`, $&, $');
-    die "Can't find 'void runTransaction' in $file" if !$before;
+    my ($before, $startline, $body, $endline, $rest) = parse_out_block($code, $file, qr/^void runTransaction\(\) {/m);
 
     # need decl before void loop
-    ($rest =~ s/void loop\(\)/namespace xod{void runTransaction();}\nvoid loop()/) or die "Can't find 'void loop()'";
-
-    my ($indent) = $startline =~ /^(\s*)/m; # could be ''
-
-    # now find '   }'
-    $rest =~ /^$indent}/m;
-    my ($body, $endline, $rest2) = ($`, $&, $');
-    die "Can't find end of 'void runTransaction' as '$indent}' in $file\n---\n$rest" if !$body;
+    ($rest =~ s/void loop\(\)/namespace xod{void runTransaction();}\n\nvoid loop()/) or die "Can't find 'void loop()'";
 
     my $oh = IO::File->new(">$file");
-    print $oh $before,$rest2;
+    print $oh $before,$rest;
+    say $oh "\n";
     say $oh 'namespace xod {';
-    say $oh $startline,$body,$endline;
+    say $oh $startline, $body;
+    say $oh $endline;
     say $oh "}";
     $oh->close;
     }
@@ -132,15 +145,7 @@ sub add_timer {
     # enable serial
     $code =~ s/^\/\/(#define XOD_DEBUG)/$1/m;
 
-    $code =~ /^void loop\(\) {/m;
-    my ($before, $loopline, $rest) = ($`,$&,$');
-    die "Can't find 'void loop()'" if !$before;
-
-    my ($indent) = $loopline =~ /^(\s*)/m;
-
-    $rest =~ /^$indent}/m;
-    my ($body, $endline, $rest2) = ($`,$&,$');
-    die "Can't find 'end of void loop() as '$indent}' in $file" if !$body;
+    my ($before, $loopline, $body, $endline, $rest) = parse_out_block($code, $file, qr/^void loop\(\) {/m );
 
     mkdir($outfile);
     my $oh = IO::File->new(">$outfile/$outfile.ino");
@@ -161,7 +166,7 @@ sub add_timer {
         }
 EOS
     print $oh $endline;
-    print $oh $rest2;
+    print $oh $rest;
     $oh->close;
 
     return "$outfile/$outfile.ino";

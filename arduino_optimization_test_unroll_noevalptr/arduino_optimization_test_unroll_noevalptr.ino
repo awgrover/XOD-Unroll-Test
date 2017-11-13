@@ -1045,6 +1045,7 @@ void setup() {
 }
 
 namespace xod{void runTransaction();}
+
 void loop() {
     xod::idle();
     xod::runTransaction();
@@ -1558,5 +1559,6 @@ void runTransaction() {
 
     XOD_TRACE_F("Transaction completed, t=");
     XOD_TRACE_LN(millis());
+
 }
 }

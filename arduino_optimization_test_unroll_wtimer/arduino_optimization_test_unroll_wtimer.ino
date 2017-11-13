@@ -1045,6 +1045,7 @@ void setup() {
 }
 
 namespace xod{void runTransaction();}
+
 void loop() {
     static int loop_count = 0;
     static unsigned long start_time = millis();
@@ -1587,5 +1588,6 @@ void runTransaction() {
 
     XOD_TRACE_F("Transaction completed, t=");
     XOD_TRACE_LN(millis());
+
 }
 }
