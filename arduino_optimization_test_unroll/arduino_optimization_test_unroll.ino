@@ -1511,6 +1511,8 @@ namespace xod {
         &storage_9
     };
 }
+
+
 namespace xod {
 void runTransaction() {
     g_transactionTime = millis();

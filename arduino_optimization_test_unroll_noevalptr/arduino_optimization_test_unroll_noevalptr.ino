@@ -975,12 +975,7 @@ void emitValueImpl(
     }
 }
 
-void evaluateNode(NodeId nid) {
-    XOD_TRACE_F("eval #");
-    XOD_TRACE_LN(nid);
-    EvalFuncPtr eval = getWiringValue<EvalFuncPtr>(nid, 0);
-    eval(nid);
-}
+
 
 
 
@@ -1495,6 +1490,8 @@ namespace xod {
         &storage_9
     };
 }
+
+
 namespace xod {
 void runTransaction() {
     g_transactionTime = millis();

@@ -96,7 +96,6 @@ sub replace_the_loop {
 sub parse_out_block {
   # string, ...
   my ($file, $start_re) = @_[1,2]; # @_[0] is the string
-  warn "@@ ",@_[2];
 
   $_[0] =~ $start_re;
 
@@ -187,6 +186,10 @@ sub remove_EvalFuncPtr {
     # const xod__core__constant_number::Wiring wiring_0 PROGMEM = {
     # &xod__core__constant_number::evaluate,
     $code =~ s/(wiring_\d+ PROGMEM = \{)\s+&[^,]+,/$1/sg;
+    
+    # remove dead code
+    my ($before, $s,$b,$e, $rest) = parse_out_block($code, $file, qr/void evaluateNode\(NodeId nid\) {/m );
+    $code = $before . $rest;
 
     mkdir($outfile);
     my $oh = IO::File->new(">$outfile/$outfile.ino");
