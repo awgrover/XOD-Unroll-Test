@@ -38,6 +38,8 @@ sub unroll {
     say "Nodes $node_count";
 
     my $eval_functions = collect_eval_functions();
+    # remove constant_nodes
+    # delete their dirty flags?
     replace_the_loop($node_count, $eval_functions);
     
     print $uh $xod_code;
@@ -76,7 +78,6 @@ sub replace_the_loop {
     my @unrolled;
 
     push @unrolled, '// Unrolled';
-
 
     foreach my $node_index ((0..$node_count-1)) {
         push @unrolled, "if (isNodeDirty($node_index)) {";
